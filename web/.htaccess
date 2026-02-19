@@ -1,0 +1,11 @@
+# Standard Drupal 11 Routing
+RewriteEngine on
+
+# Handle the /core/install.php and other internal paths
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} !=/favicon.ico
+RewriteRule ^ index.php [L]
+
+# Force the server to recognize the correct index file
+DirectoryIndex index.php
