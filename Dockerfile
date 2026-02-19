@@ -1,3 +1,4 @@
+# Deployment for ChefPaws - v1.0.1
 FROM php:8.3-apache
 
 # 1. FORCE-CLEAN Apache MPMs to stop the AH00534 error
