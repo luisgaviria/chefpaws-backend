@@ -6,34 +6,21 @@
  */
 
 /**
- * THE ULTIMATE CIRCUIT BREAKER
- * Forces the path and protocol to stop the 302 insanity.
+ * THE ABSOLUTE PATH & PROTOCOL FORCING
+ * We hard-code these to stop the Railway Edge from looping.
  */
+$_SERVER['HTTPS'] = 'on';
+$_SERVER['SERVER_PORT'] = 443;
+
 if (str_contains($_SERVER['REQUEST_URI'] ?? '', 'install.php')) {
-  // Hard-code the internal pathing so Drupal doesn't try to "correct" it.
   $_SERVER['SCRIPT_NAME'] = '/core/install.php';
   $_SERVER['PHP_SELF'] = '/core/install.php';
   $_SERVER['REQUEST_URI'] = '/core/install.php';
-  
-  // Forces the absolute path on the Railway container disk.
   $_SERVER['SCRIPT_FILENAME'] = '/app/web/core/install.php';
 }
 
-/**
- * HTTPS & PROXY HANDSHAKE
- */
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-  $_SERVER['HTTPS'] = 'on';
-  $_SERVER['SERVER_PORT'] = 443;
-}
-
-// Intercept the internal 8080 port from the logs.
-if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 8080) {
-  $_SERVER['SERVER_PORT'] = 443;
-}
-
 $settings['reverse_proxy'] = TRUE;
-// Trust the proxy IP provided by Railway.
+// Trusting all potential Railway proxy hops.
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
 
 /**
@@ -64,16 +51,13 @@ if (getenv('MYSQLHOST')) {
     'autoload' => 'core/modules/mysql/src/Driver/Database/mysql',
   ];
 
-  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'deployment-salt-vfinal';
+  // Using a static salt temporarily to rule out environment variable lag.
+  $settings['hash_salt'] = 'stable-salt-for-troubleshooting-123';
 
-  $settings['trusted_host_patterns'] = [
-    '^.*\.railway\.app$',
-    '^.*\.up\.railway\.app$',
-    '^localhost$',
-  ];
+  $settings['trusted_host_patterns'] = ['.*']; // Trust all hosts temporarily to break the loop.
 
   $settings['config_sync_directory'] = 'sites/default/files/sync';
-  $config['system.logging']['error_level'] = 'hide';
+  $config['system.logging']['error_level'] = 'verbose'; // Set to verbose to see actual errors if it loads.
 }
 
 /**
