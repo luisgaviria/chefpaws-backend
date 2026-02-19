@@ -28,11 +28,9 @@ if (getenv('MYSQLHOST')) {
     'driver'   => 'mysql',
     'prefix'   => '',
     'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
-    // Vital for Drupal 11 on Railway's environment
     'autoload' => 'core/modules/mysql/src/Driver/Database/mysql',
   ];
 
-  // Uses the environment variable from Railway; falls back to a temporary one for the first boot
   $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'initial-deployment-salt-change-me-in-railway-vars';
 
   $settings['trusted_host_patterns'] = [
@@ -41,9 +39,19 @@ if (getenv('MYSQLHOST')) {
     '^localhost$',
   ];
 
-  // Pointing config sync to the persistent volume mount
+  /**
+   * FIX: Too Many Redirects
+   * Tells Drupal it is behind Railway's reverse proxy.
+   */
+  $settings['reverse_proxy'] = TRUE;
+  $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR']];
+
+  // If Railway's proxy says it's HTTPS, tell PHP it's HTTPS
+  if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+    $_SERVER['HTTPS'] = 'on';
+  }
+
   $settings['config_sync_directory'] = 'sites/default/files/sync';
-  
   $config['system.logging']['error_level'] = 'hide';
 }
 
@@ -54,7 +62,6 @@ if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
   include $app_root . '/' . $site_path . '/settings.local.php';
 }
 
-// Automatically generated include for settings managed by ddev
 if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev.php')) {
   include __DIR__ . '/settings.ddev.php';
 }
