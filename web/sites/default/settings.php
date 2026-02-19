@@ -6,33 +6,15 @@
  */
 
 /**
- * THE ULTIMATE CIRCUIT BREAKER
- * Forces the path and protocol to stop the 302 bounce.
+ * HTTPS & PROXY HANDSHAKE
+ * Tells Drupal to trust the Railway Edge HTTPS signal.
  */
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
   $_SERVER['HTTPS'] = 'on';
   $_SERVER['SERVER_PORT'] = 443;
 }
 
-// Intercept the internal 8080 port revealed in your logs.
-if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 8080) {
-  $_SERVER['SERVER_PORT'] = 443;
-}
-
-/**
- * INTERNAL REDIRECT KILLER
- * Forces internal pathing to match what Drupal expects.
- */
-if (isset($_SERVER['REQUEST_URI']) && str_contains($_SERVER['REQUEST_URI'], 'install.php')) {
-  $_SERVER['SCRIPT_NAME'] = '/core/install.php';
-  $_SERVER['PHP_SELF'] = '/core/install.php';
-  $_SERVER['REQUEST_URI'] = '/core/install.php';
-  // Explicitly tell PHP where the file is on the Railway disk.
-  $_SERVER['SCRIPT_FILENAME'] = '/app/web/core/install.php';
-}
-
 $settings['reverse_proxy'] = TRUE;
-// Trust the proxy IP provided by Railway.
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
 
 /**
@@ -63,8 +45,7 @@ if (getenv('MYSQLHOST')) {
     'autoload' => 'core/modules/mysql/src/Driver/Database/mysql',
   ];
 
-  // Using a stable salt to avoid potential environment variable issues during setup.
-  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'stable-salt-for-chefpaws-backend';
+  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'stable-salt-v1';
 
   $settings['trusted_host_patterns'] = [
     '^.*\.railway\.app$',
