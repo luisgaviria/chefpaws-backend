@@ -6,35 +6,34 @@
  */
 
 /**
- * THE INTERNAL REDIRECT KILLER
- * Forces the internal pathing to stop the 302 bounce before it starts.
+ * THE ULTIMATE CIRCUIT BREAKER
+ * Forces the path and protocol to stop the 302 insanity.
  */
 if (str_contains($_SERVER['REQUEST_URI'] ?? '', 'install.php')) {
-  // We force everything to the clean path Drupal expects to see.
+  // Hard-code the internal pathing so Drupal doesn't try to "correct" it.
   $_SERVER['SCRIPT_NAME'] = '/core/install.php';
   $_SERVER['PHP_SELF'] = '/core/install.php';
   $_SERVER['REQUEST_URI'] = '/core/install.php';
   
-  // Explicitly tell PHP where the file is on the Railway disk.
+  // Forces the absolute path on the Railway container disk.
   $_SERVER['SCRIPT_FILENAME'] = '/app/web/core/install.php';
 }
 
 /**
- * HTTPS & Proxy Handshake
- * Ensures Drupal recognizes Railway's HTTPS edge.
+ * HTTPS & PROXY HANDSHAKE
  */
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
   $_SERVER['HTTPS'] = 'on';
   $_SERVER['SERVER_PORT'] = 443;
 }
 
-// Intercept the internal 8080 signal revealed in your logs.
+// Intercept the internal 8080 port from the logs.
 if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 8080) {
   $_SERVER['SERVER_PORT'] = 443;
 }
 
 $settings['reverse_proxy'] = TRUE;
-// Trust the proxy IP or the forwarded-for header.
+// Trust the proxy IP provided by Railway.
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
 
 /**
@@ -65,7 +64,7 @@ if (getenv('MYSQLHOST')) {
     'autoload' => 'core/modules/mysql/src/Driver/Database/mysql',
   ];
 
-  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'deployment-salt-fix';
+  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'deployment-salt-vfinal';
 
   $settings['trusted_host_patterns'] = [
     '^.*\.railway\.app$',
