@@ -38,3 +38,7 @@ phpstan-tmp
 
 # Ignore phpcs cache
 .phpcscache
+
+
+# Ignore Composer vendor folder
+vendor/
