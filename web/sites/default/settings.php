@@ -6,18 +6,23 @@
  */
 
 /**
- * THE ULTIMATE LOOP BREAKER
- * Forces HTTPS and sets the trusted proxy early in the boot process.
+ * 1. THE PROTOCOL FORCER
+ * This tells Drupal: "You are on HTTPS and Port 443. Period."
+ * This kills the HTTP -> HTTPS redirect loop.
  */
 $_SERVER['HTTPS'] = 'on';
 $_SERVER['SERVER_PORT'] = 443;
 
+/**
+ * 2. THE PROXY TRUST
+ * Tells Drupal to trust the 'X-Forwarded-For' header from Railway.
+ */
 $settings['reverse_proxy'] = TRUE;
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
 
 /**
- * INTERNAL PATH FORCING
- * Ensures Drupal doesn't try to "correct" the install.php path.
+ * 3. THE INSTALLER PATH FIX
+ * Forces the script identity so Drupal doesn't try to "correct" its own path.
  */
 if (isset($_SERVER['REQUEST_URI']) && str_contains($_SERVER['REQUEST_URI'], 'install.php')) {
   $_SERVER['SCRIPT_NAME'] = '/core/install.php';
@@ -54,9 +59,9 @@ if (getenv('MYSQLHOST')) {
     'autoload' => 'core/modules/mysql/src/Driver/Database/mysql',
   ];
 
-  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'stable-salt-v1';
+  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'fixed-salt-for-chefpaws';
 
-  // Temporarily trust all hosts to verify the loop is broken.
+  // Trust all hosts temporarily to ensure the loop is broken.
   $settings['trusted_host_patterns'] = ['.*'];
 
   $settings['config_sync_directory'] = 'sites/default/files/sync';
