@@ -6,11 +6,16 @@
  */
 
 /**
- * CRITICAL: BREAK THE REDIRECT LOOP
- * These must be at the TOP to override the bootstrap.
+ * THE FINAL LOOP BREAKER: Port-Aware
+ * Intercepts the internal 8080 signal and forces 443.
  */
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
   $_SERVER['HTTPS'] = 'on';
+  $_SERVER['SERVER_PORT'] = 443;
+}
+
+// If Railway is using 8080 internally, tell PHP to ignore it
+if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 8080) {
   $_SERVER['SERVER_PORT'] = 443;
 }
 
@@ -19,12 +24,12 @@ $settings['reverse_proxy'] = TRUE;
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
 
 /**
- * THE ABSOLUTE LOOP BREAKER
- * Hard-codes the base URL for the installer to stop the 302 bounce.
+ * SCRIPT IDENTITY: Stops the install.php loop
  */
 if (str_contains($_SERVER['REQUEST_URI'], 'install.php')) {
   $_SERVER['REQUEST_URI'] = '/core/install.php';
   $_SERVER['SCRIPT_NAME'] = '/core/install.php';
+  // Hard-codes the base URL for the installer to stop the 302 bounce.
   $base_url = 'https://chefpaws-backend-production.up.railway.app';
 }
 
