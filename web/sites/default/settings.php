@@ -1,51 +1,39 @@
 <?php
 
-
 /**
  * @file
- * Drupal 11 site-specific configuration file for ChefPaws.
+ * Drupal 11 configuration for ChefPaws on Railway.
  */
 
 /**
  * 1. THE PROTOCOL FORCER
- * This tells Drupal: "You are on HTTPS and Port 443. Period."
- * This kills the HTTP -> HTTPS redirect loop.
+ * Because Railway terminates SSL at the edge, we must tell PHP
+ * that the request is secure even though it arrives on port 80/8080.
  */
-$_SERVER['HTTPS'] = 'on';
-$_SERVER['SERVER_PORT'] = 443;
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+  $_SERVER['HTTPS'] = 'on';
+  $_SERVER['SERVER_PORT'] = 443;
+}
 
 /**
- * 2. THE PROXY TRUST
+ * 2. REVERSE PROXY CONFIGURATION
  * Tells Drupal to trust the 'X-Forwarded-For' header from Railway.
  */
 $settings['reverse_proxy'] = TRUE;
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
 
 /**
- * 3. THE INSTALLER PATH FIX
- * Forces the script identity so Drupal doesn't try to "correct" its own path.
+ * 3. TRUSTED HOST PATTERN
+ * Allows your Railway domain to be recognized as valid.
  */
-if (isset($_SERVER['REQUEST_URI']) && str_contains($_SERVER['REQUEST_URI'], 'install.php')) {
-  $_SERVER['SCRIPT_NAME'] = '/core/install.php';
-  $_SERVER['PHP_SELF'] = '/core/install.php';
-  $_SERVER['REQUEST_URI'] = '/core/install.php';
-  $_SERVER['SCRIPT_FILENAME'] = '/app/web/core/install.php';
-}
+$settings['trusted_host_patterns'] = [
+  '^.*\.railway\.app$',
+  '^localhost$',
+];
 
 /**
- * Global Settings
- */
-$databases = [];
-$settings['update_free_access'] = FALSE;
-$settings['container_yamls'][] = $app_root . '/' . $site_path . '/services.yml';
-$settings['file_scan_ignore_directories'] = ['node_modules', 'bower_components'];
-$settings['entity_update_batch_size'] = 50;
-$settings['entity_update_backup'] = TRUE;
-$settings['state_cache'] = TRUE;
-$settings['migrate_node_migrate_type_classic'] = FALSE;
-
-/**
- * Railway Cloud Configuration
+ * 4. DATABASE CONFIGURATION
+ * Dynamically pulls from your Railway MySQL instance.
  */
 if (getenv('MYSQLHOST')) {
   $databases['default']['default'] = [
@@ -59,23 +47,28 @@ if (getenv('MYSQLHOST')) {
     'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
     'autoload' => 'core/modules/mysql/src/Driver/Database/mysql',
   ];
-
-  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'fixed-salt-for-chefpaws';
-
-  // Trust all hosts temporarily to ensure the loop is broken.
-  $settings['trusted_host_patterns'] = ['.*'];
-
-  $settings['config_sync_directory'] = 'sites/default/files/sync';
-  $config['system.logging']['error_level'] = 'verbose';
 }
 
 /**
- * Load local development override configuration (DDEV), if available.
+ * 5. SALT & PATHS
+ */
+$settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'fixed-salt-for-chefpaws-v1';
+$settings['config_sync_directory'] = 'sites/default/files/sync';
+$settings['update_free_access'] = FALSE;
+$settings['container_yamls'][] = $app_root . '/' . $site_path . '/services.yml';
+
+/**
+ * 6. INSTALLER OVERRIDE
+ * Ensures Drupal doesn't try to "correct" its own path during setup.
+ */
+if (isset($_SERVER['REQUEST_URI']) && str_contains($_SERVER['REQUEST_URI'], 'install.php')) {
+  $_SERVER['SCRIPT_NAME'] = '/core/install.php';
+}
+
+/**
+ * 7. LOCAL DEVELOPMENT
+ * Keeps your DDEV or local environment working.
  */
 if (file_exists($app_root . '/' . $site_path . '/settings.local.php')) {
   include $app_root . '/' . $site_path . '/settings.local.php';
-}
-
-if (getenv('IS_DDEV_PROJECT') == 'true' && file_exists(__DIR__ . '/settings.ddev.php')) {
-  include __DIR__ . '/settings.ddev.php';
 }
