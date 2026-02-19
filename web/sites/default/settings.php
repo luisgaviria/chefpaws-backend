@@ -1,5 +1,7 @@
 <?php
 
+die("Settings file is active on Railway");
+
 /**
  * @file
  * Drupal 11 site-specific configuration file for ChefPaws.
