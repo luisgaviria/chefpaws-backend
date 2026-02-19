@@ -1,7 +1,11 @@
-# Use PHP 8.3 with Apache for Drupal 11
 FROM php:8.3-apache
 
-# Install the GD extension and other system dependencies
+# 1. FORCE-CLEAN Apache MPMs to stop the AH00534 error
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_worker.load && \
+    ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load && \
+    ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf
+
+# 2. Install dependencies for GD (required for Drupal 11)
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -11,18 +15,15 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure and install PHP extensions
+# 3. Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd mysqli pdo pdo_mysql zip opcache
 
-# Enable Apache mod_rewrite for Drupal's clean URLs
+# 4. Enable mod_rewrite for Drupal's Clean URLs
 RUN a2enmod rewrite
 
-# Set the working directory
 WORKDIR /var/www/html
-
-# Copy all project files into the container
 COPY . .
 
-# Set permissions for the files directory
+# Set permissions for your brother's uploads
 RUN chown -R www-data:www-data /var/www/html/web/sites/default/files
