@@ -18,6 +18,11 @@ $settings['reverse_proxy'] = TRUE;
 // Trust the proxy IP or the forwarded-for header.
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
 
+if (isset($_SERVER['SCRIPT_NAME']) && str_contains($_SERVER['SCRIPT_NAME'], 'install.php')) {
+  $_SERVER['REQUEST_URI'] = '/core/install.php';
+  $_SERVER['SCRIPT_NAME'] = '/core/install.php';
+}
+
 /**
  * Global Settings
  */
@@ -53,6 +58,7 @@ if (getenv('MYSQLHOST')) {
     '^.*\.up\.railway\.app$',
     '^localhost$',
   ];
+  
 
   $settings['config_sync_directory'] = 'sites/default/files/sync';
   $config['system.logging']['error_level'] = 'hide';
