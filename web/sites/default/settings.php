@@ -6,15 +6,29 @@
  */
 
 /**
- * THE FINAL LOOP BREAKER: Port-Aware
- * Intercepts the internal 8080 signal and forces 443.
+ * THE INTERNAL REDIRECT KILLER
+ * Forces the internal pathing to stop the 302 bounce before it starts.
+ */
+if (str_contains($_SERVER['REQUEST_URI'] ?? '', 'install.php')) {
+  // We force everything to the clean path Drupal expects to see.
+  $_SERVER['SCRIPT_NAME'] = '/core/install.php';
+  $_SERVER['PHP_SELF'] = '/core/install.php';
+  $_SERVER['REQUEST_URI'] = '/core/install.php';
+  
+  // Explicitly tell PHP where the file is on the Railway disk.
+  $_SERVER['SCRIPT_FILENAME'] = '/app/web/core/install.php';
+}
+
+/**
+ * HTTPS & Proxy Handshake
+ * Ensures Drupal recognizes Railway's HTTPS edge.
  */
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
   $_SERVER['HTTPS'] = 'on';
   $_SERVER['SERVER_PORT'] = 443;
 }
 
-// If Railway is using 8080 internally, tell PHP to ignore it
+// Intercept the internal 8080 signal revealed in your logs.
 if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 8080) {
   $_SERVER['SERVER_PORT'] = 443;
 }
@@ -22,16 +36,6 @@ if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 8080) {
 $settings['reverse_proxy'] = TRUE;
 // Trust the proxy IP or the forwarded-for header.
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
-
-/**
- * SCRIPT IDENTITY: Stops the install.php loop
- */
-if (str_contains($_SERVER['REQUEST_URI'], 'install.php')) {
-  $_SERVER['REQUEST_URI'] = '/core/install.php';
-  $_SERVER['SCRIPT_NAME'] = '/core/install.php';
-  // Hard-codes the base URL for the installer to stop the 302 bounce.
-  $base_url = 'https://chefpaws-backend-production.up.railway.app';
-}
 
 /**
  * Global Settings
@@ -61,7 +65,7 @@ if (getenv('MYSQLHOST')) {
     'autoload' => 'core/modules/mysql/src/Driver/Database/mysql',
   ];
 
-  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'initial-deployment-salt-change-me-in-railway-vars';
+  $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'deployment-salt-fix';
 
   $settings['trusted_host_patterns'] = [
     '^.*\.railway\.app$',
