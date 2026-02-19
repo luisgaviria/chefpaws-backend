@@ -2,32 +2,29 @@
 
 /**
  * @file
- * Drupal site-specific configuration file for ChefPaws.
+ * Drupal 11 site-specific configuration file for ChefPaws.
  */
 
 /**
- * THE INTERNAL REDIRECT KILLER
+ * THE ULTIMATE LOOP BREAKER
+ * Forces HTTPS and sets the trusted proxy early in the boot process.
+ */
+$_SERVER['HTTPS'] = 'on';
+$_SERVER['SERVER_PORT'] = 443;
+
+$settings['reverse_proxy'] = TRUE;
+$settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
+
+/**
+ * INTERNAL PATH FORCING
+ * Ensures Drupal doesn't try to "correct" the install.php path.
  */
 if (isset($_SERVER['REQUEST_URI']) && str_contains($_SERVER['REQUEST_URI'], 'install.php')) {
   $_SERVER['SCRIPT_NAME'] = '/core/install.php';
   $_SERVER['PHP_SELF'] = '/core/install.php';
   $_SERVER['REQUEST_URI'] = '/core/install.php';
   $_SERVER['SCRIPT_FILENAME'] = '/app/web/core/install.php';
-  
-  // NEW DOMAIN UPDATE
-  $base_url = 'https://generous-manifestation-production-a1fb.up.railway.app';
 }
-
-/**
- * HTTPS & PROXY HANDSHAKE
- */
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-  $_SERVER['HTTPS'] = 'on';
-  $_SERVER['SERVER_PORT'] = 443;
-}
-
-$settings['reverse_proxy'] = TRUE;
-$settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''] + explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
 
 /**
  * Global Settings
@@ -59,11 +56,8 @@ if (getenv('MYSQLHOST')) {
 
   $settings['hash_salt'] = getenv('DRUPAL_HASH_SALT') ?: 'stable-salt-v1';
 
-  $settings['trusted_host_patterns'] = [
-    '^.*\.railway\.app$',
-    '^.*\.up\.railway\.app$',
-    '^localhost$',
-  ];
+  // Temporarily trust all hosts to verify the loop is broken.
+  $settings['trusted_host_patterns'] = ['.*'];
 
   $settings['config_sync_directory'] = 'sites/default/files/sync';
   $config['system.logging']['error_level'] = 'verbose';
