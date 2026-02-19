@@ -1,6 +1,5 @@
 <?php
 
-die("Settings file is active on Railway");
 
 /**
  * @file
