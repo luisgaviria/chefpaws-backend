@@ -4,7 +4,9 @@
 }
 
 :{$PORT} {
-    root * /app/web
+    # Use relative path so it's bulletproof
+    root * ./web
+    
     php_server
     file_server
 }
