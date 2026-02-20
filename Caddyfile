@@ -1,17 +1,13 @@
 {
     frankenphp
-    # Tell Caddy to stop trying to manage its own certificates
+    # Strictly disable all internal Caddy redirect logic
     auto_https off
 }
 
-# Add 'http://' to force the listener into plain text mode internally
+# Listen on HTTP only internally
 http://:{$PORT} {
-    # Bind to the internal network address Railway expects
     bind 0.0.0.0
-    
     root * /app/web
-    
-    # Enable the Drupal engine
     php_server
     file_server
 }

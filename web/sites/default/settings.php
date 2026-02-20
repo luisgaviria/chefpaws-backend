@@ -20,11 +20,16 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
  * Tells Drupal to trust the 'X-Forwarded-For' header.
  */
 $settings['reverse_proxy'] = TRUE;
+
+// Trust the immediate proxy sending the request.
 $settings['reverse_proxy_addresses'] = [$_SERVER['REMOTE_ADDR'] ?? ''];
+
+// Specifically for Railway: iterate through the forwarded chain.
 if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+  $forwarded_ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
   $settings['reverse_proxy_addresses'] = array_merge(
     $settings['reverse_proxy_addresses'],
-    explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])
+    array_map('trim', $forwarded_ips)
   );
 }
 
@@ -83,8 +88,6 @@ $settings['container_yamls'][] = $app_root . '/' . $site_path . '/services.yml';
 
 /**
  * 6. INSTALLER & FILE SYSTEM
- * PaaS filesystems are ephemeral; public files should ideally be on S3,
- * but this allows the site to function in the meantime.
  */
 $settings['file_public_path'] = 'sites/default/files';
 
