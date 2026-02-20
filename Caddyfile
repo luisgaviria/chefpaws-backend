@@ -1,12 +1,13 @@
 {
     frankenphp
+    # This removes the "unformatted" warning you saw in the logs
 }
 
-:{$PORT} {
-    # Point exactly to the web folder inside the app directory
+# Change ":{$PORT}" to "0.0.0.0:{$PORT}"
+0.0.0.0:{$PORT} {
     root * /app/web
     
-    # Enable PHP and static file serving
+    # This is the standard for Drupal 11
     php_server
     file_server
 }
