@@ -2,6 +2,11 @@
     NIXPACKS_PHP_VERSION = "8.3"
     PHP_EXTENSIONS = "gd, pdo_mysql, opcache, zip, mbstring"
 
+[phases.setup]
+    nixPkgs = ['php83', 'php83Packages.composer', 'php83Packages.gd']
+
+[phases.build]
+    cmds = ['composer install --optimize-autoloader --no-interaction']
+
 [start]
-    # This tells FrankenPHP to run from the root but treat /web as the public folder
     cmd = "frankenphp run --config /Caddyfile --adapter caddyfile --root /app/web"
