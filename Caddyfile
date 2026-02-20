@@ -1,0 +1,10 @@
+{
+    frankenphp
+    order php_server before file_server
+}
+
+:{$PORT} {
+    root * /app/web
+    php_server
+    file_server
+}
