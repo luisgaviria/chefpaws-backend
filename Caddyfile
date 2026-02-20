@@ -1,12 +1,12 @@
 {
     frankenphp
-    order php_server before file_server
 }
 
 :{$PORT} {
-    # Use relative path so it's bulletproof
-    root * ./web
+    # Point exactly to the web folder inside the app directory
+    root * /app/web
     
+    # Enable PHP and static file serving
     php_server
     file_server
 }
