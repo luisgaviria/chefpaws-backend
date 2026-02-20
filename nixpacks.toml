@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ['nginx', 'php84', 'php84Packages.php-fpm']
+
+[phases.build]
+cmds = ['composer install --optimize-autoloader --no-interaction']
+
+[start]
+cmd = 'nginx -g "daemon off;" & php-fpm -F'
