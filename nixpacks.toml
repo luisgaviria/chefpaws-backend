@@ -1,3 +1,7 @@
 [variables]
     NIXPACKS_PHP_VERSION = "8.3"
     PHP_EXTENSIONS = "gd, pdo_mysql, opcache, zip, mbstring"
+
+[start]
+    # This tells FrankenPHP to run from the root but treat /web as the public folder
+    cmd = "frankenphp run --config /Caddyfile --adapter caddyfile --root /app/web"
